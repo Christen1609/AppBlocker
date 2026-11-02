@@ -16,11 +16,18 @@ function Test-Allowed([datetime]$Time) {
     return $hour -ge $start -and $hour -lt $end
 }
 
-# True once hours that start partway through the day have begun, so the rules show when cTrader unlocks.
-# Days open from midnight (Sat-Sun) don't count.
+# Days that show the rules when the hours begin. Sat-Sun are open all day, so they don't need them.
+$RulesDays = 'Monday', 'Tuesday', 'Wednesday', 'Thursday'
+
+# True while the hours are on for a day in $RulesDays, so the rules show when cTrader unlocks.
 function Test-RulesDue([datetime]$Time) {
+    return ($RulesDays -contains "$($Time.DayOfWeek)") -and (Test-Allowed $Time)
+}
+
+# Whole seconds until today's hours end (0 or less once they have).
+function Get-SecondsLeft([datetime]$Time) {
     $start, $end = $Schedule["$($Time.DayOfWeek)"]
-    return $start -gt 0 -and (Test-Allowed $Time)
+    return [int][Math]::Ceiling($end * 3600 - $Time.TimeOfDay.TotalSeconds)
 }
 
 # Holds the date "I've read the rules" was last clicked. Kept outside OneDrive so a sync lock can't hide a click.
@@ -29,4 +36,15 @@ $RulesReadFile = Join-Path $env:LOCALAPPDATA 'AppBlocker\rules-read.txt'
 function Test-RulesRead([datetime]$Time) {
     $read = Get-Content -LiteralPath $RulesReadFile -ErrorAction SilentlyContinue
     return "$read".Trim() -eq $Time.ToString('yyyy-MM-dd')
+}
+
+# Saves the click as $Time's date. Pass the same $Time you used to check the hours, so both use one day.
+# Returns $false if the file couldn't be written (for example, if it is locked).
+function Set-RulesRead([datetime]$Time) {
+    try {
+        $null = New-Item -ItemType Directory -Force -Path (Split-Path $RulesReadFile) -ErrorAction Stop
+        Set-Content -LiteralPath $RulesReadFile -Value $Time.ToString('yyyy-MM-dd') -ErrorAction Stop
+        return $true
+    }
+    catch { return $false }
 }

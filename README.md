@@ -10,7 +10,7 @@ Closes the cTrader desktop app outside set hours on Windows, unless trades are o
 
 Times follow the PC's clock, so daylight saving is handled automatically.
 
-At 5:30pm Monday to Thursday a **Trading Rules** window shows your rules. cTrader stays locked until you click **I've read the rules** with the mouse. The window can't be closed any other way.
+At 5:30pm Monday to Thursday a **Trading Rules** window shows your rules. cTrader stays locked until you click **I've read the rules** with the mouse. The window can't be closed any other way, and it closes itself at 8pm. If it can't open, a plain popup shows the rules and OK counts as read. If it keeps failing, the rules are skipped for that day so a bug can't lock you out.
 
 ## How it works
 
@@ -47,7 +47,7 @@ Edit `schedule.ps1`, then turn the blocker off and on again.
 
 ## Change your rules
 
-Edit `rules.txt`. No restart needed: the window reads it each time.
+Edit `rules.txt`. No restart needed: the window reads it each time. A long list scrolls inside the window.
 
 ## Files
 
@@ -57,9 +57,9 @@ Edit `rules.txt`. No restart needed: the window reads it each time.
 | `schedule.ps1` | Your allowed hours |
 | `trades.ps1` | Reads the cBot's reports |
 | `rules.txt` | Your trading rules |
-| `rules.ps1` | Shows the rules window and its unlock button |
+| `rules.ps1` | Shows the rules window and its unlock button (or a plain popup if the window can't open) |
 | `install.ps1` | Turns the blocker on |
-| `uninstall.ps1` | Turns the blocker off |
+| `uninstall.ps1` | Turns the blocker off, and closes the rules window if it's open |
 | `AppBlockerPositions.algo` | The cBot, ready to install |
 | `cBot\` | The cBot's source code |
 | `blocked.log` | Created on the first block. Lists each time cTrader was closed. |
@@ -71,3 +71,4 @@ Edit `rules.txt`. No restart needed: the window reads it each time.
 - You can turn it off yourself, so it adds friction rather than a hard lock.
 - Any open trade keeps cTrader open outside your hours, and before you click the rules button. Pending orders don't count.
 - If the cBot isn't running, cTrader closes even with trades open.
+- If the rules window fails 3 times in a day, the rules are skipped until tomorrow.
