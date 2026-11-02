@@ -25,7 +25,7 @@ At 5:30pm Mon-Thu, as cTrader unlocks, a popup titled **Trading Rules** shows th
 - **Blocker: on.** It runs hidden and starts at every Windows sign-in through the `AppBlocker` value in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
 - **Real app confirmed blocked:** `blocked.log` shows the real `cTrader` process closed twice on 2026-10-30.
 - **cBot: installed and running locally since 2026-10-31.** One account is reporting every 30 seconds and the blocker reads it. If the cBot isn't running, cTrader closes outside hours even with trades open.
-- **Git:** branch `main`, pushed to the private GitHub repo `Christen1609/AppBlocker` (remote `origin`).
+- **Git:** branch `main`, pushed to the public GitHub repo `Christen1609/AppBlocker` (remote `origin`).
 - **Trading Rules popup: on since 2026-11-02.** Tested by launching it directly; not yet seen firing at 5:30pm.
 - **Ultrareview:** failed from the home folder because that git repo covers the whole home directory. It should work from this folder with `/code-review ultra`, but hasn't been run yet.
 
