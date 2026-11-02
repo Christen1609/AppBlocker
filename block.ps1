@@ -12,14 +12,21 @@ if (-not $mutex.WaitOne(0)) { exit }
 
 $shell = New-Object -ComObject WScript.Shell
 $warned = $false
+$rulesShownOn = $null
 while ($true) {
     # Keeps Get-Date in step with the Windows clock if the time zone changes while this runs.
     [TimeZoneInfo]::ClearCachedData()
+    $now = Get-Date
+    # Once a day, as cTrader unlocks. Its own process, so the popup can stay open without pausing this loop.
+    if ($rulesShownOn -ne $now.Date -and (Test-RulesDue $now)) {
+        $rulesShownOn = $now.Date
+        Start-Process powershell.exe -WindowStyle Hidden -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$(Join-Path $PSScriptRoot 'rules.ps1')`""
+    }
     $apps = Get-Process -Name $Blocked -ErrorAction SilentlyContinue
     if (-not $apps) {
         $warned = $false
     }
-    elseif (Test-Allowed (Get-Date)) {
+    elseif (Test-Allowed $now) {
         if (-not $warned -and -not (Test-JustOpened $apps) -and -not (Test-Reporting)) {
             $warned = $true
             $null = $shell.Popup('Start AppBlockerPositions in cTrader, or it will close when your hours end, even with trades open.', 10, 'App Blocker', 48)

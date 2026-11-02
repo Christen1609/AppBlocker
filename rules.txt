@@ -1,0 +1,10 @@
+cTrader is unlocked. Read these before you trade.
+
+1. Only trade structure that you like.
+2. Keep a loss management strategy in place.
+3. Check if a stop loss makes sense. If it's too far don't trade.
+4. Don't trade Friday.
+5. Breaking high highs or low lows in multiple time frames is a good sign.
+6. Take profit should be at 20 pips.
+7. Can I afford a loss?
+8. If a previous candle doesn't break any highs or lows, there's a good chance for it to be consolidating.
