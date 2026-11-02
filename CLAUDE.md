@@ -18,7 +18,7 @@ Times follow the laptop's Windows clock (Adelaide time zone, automatic daylight 
 
 Outside those hours cTrader is closed within about 2 seconds, **unless trades are open**. If trades are open it stays open, and it closes within about 30 seconds of the last trade closing.
 
-At 5:30pm Mon-Thu a window titled **Trading Rules** shows the owner's rules from `rules.txt`, and cTrader stays closed (unless trades are open) until **I've read the rules** is clicked with the mouse. The click is saved as today's date in `%LOCALAPPDATA%\AppBlockerules-read.txt`, so it's needed once a day and survives restarts. The window can't be closed any other way, and reopens if it's killed. If the PC was off or asleep at 5:30 it shows when it's back on, before 8pm. Days open from midnight (Sat-Sun) don't need it.
+At 5:30pm Mon-Thu a window titled **Trading Rules** shows the owner's rules from `rules.txt`, and cTrader stays closed (unless trades are open) until **I've read the rules** is clicked with the mouse. The click is saved as today's date in `%LOCALAPPDATA%\AppBlocker\rules-read.txt`, so it's needed once a day and survives restarts. The window can't be closed any other way, and reopens if it's killed. If the PC was off or asleep at 5:30 it shows when it's back on, before 8pm. Days open from midnight (Sat-Sun) don't need it.
 
 ## Current state
 
