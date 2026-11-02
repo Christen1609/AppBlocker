@@ -18,7 +18,7 @@ Times follow the laptop's Windows clock (Adelaide time zone, automatic daylight 
 
 Outside those hours cTrader is closed within about 2 seconds, **unless trades are open**. If trades are open it stays open, and it closes within about 30 seconds of the last trade closing.
 
-At 5:30pm Mon-Thu, as cTrader unlocks, a popup titled **Trading Rules** shows the owner's rules from `rules.txt`. It shows once a day, stays until OK is clicked, and shows late (before 8pm) if the PC was off or asleep at 5:30. Days open from midnight (Sat-Sun) don't get it.
+At 5:30pm Mon-Thu a window titled **Trading Rules** shows the owner's rules from `rules.txt`, and cTrader stays closed (unless trades are open) until **I've read the rules** is clicked with the mouse. The click is saved as today's date in `%LOCALAPPDATA%\AppBlockerules-read.txt`, so it's needed once a day and survives restarts. The window can't be closed any other way, and reopens if it's killed. If the PC was off or asleep at 5:30 it shows when it's back on, before 8pm. Days open from midnight (Sat-Sun) don't need it.
 
 ## Current state
 
@@ -26,7 +26,7 @@ At 5:30pm Mon-Thu, as cTrader unlocks, a popup titled **Trading Rules** shows th
 - **Real app confirmed blocked:** `blocked.log` shows the real `cTrader` process closed twice on 2026-10-30.
 - **cBot: installed and running locally since 2026-10-31.** One account is reporting every 30 seconds and the blocker reads it. If the cBot isn't running, cTrader closes outside hours even with trades open.
 - **Git:** branch `main`, pushed to the public GitHub repo `Christen1609/AppBlocker` (remote `origin`).
-- **Trading Rules popup: on since 2026-11-02.** Tested by launching it directly; not yet seen firing at 5:30pm.
+- **Trading Rules window and unlock button: on since 2026-11-02.** Tested end to end with a fake app, but not yet seen at a real 5:30pm.
 - **Ultrareview:** failed from the home folder because that git repo covers the whole home directory. It should work from this folder with `/code-review ultra`, but hasn't been run yet.
 
 ## Next steps
@@ -34,23 +34,23 @@ At 5:30pm Mon-Thu, as cTrader unlocks, a popup titled **Trading Rules** shows th
 1. Start the cBot locally (not in the cloud) on any other account being traded, during allowed hours. It only sees the account it runs on.
 2. Check whether the cBot restarts by itself when cTrader reopens. Sources disagree, and this hasn't been tested.
 3. Confirm the report shows a number above 0 with a real open trade. Reports are in `%USERPROFILE%\OneDrive\Documents\cAlgo\Data\cBots\AppBlockerPositions`.
-4. Confirm the Trading Rules popup appears at 5:30pm on a weekday.
+4. Confirm the Trading Rules window appears at 5:30pm on a weekday and the button unlocks cTrader.
 
 ## Files
 
 | File | Language | Purpose |
 |---|---|---|
 | `block.ps1` | PowerShell | Main loop. Checks every 2 seconds and closes blocked apps. |
-| `schedule.ps1` | PowerShell | Allowed hours table, `Test-Allowed` and `Test-RulesDue`. |
+| `schedule.ps1` | PowerShell | Allowed hours table, `Test-Allowed`, `Test-RulesDue` and `Test-RulesRead`. |
 | `trades.ps1` | PowerShell | Reads cBot reports: `Test-TradesOpen`, `Test-Reporting`, `Test-JustOpened`. |
 | `rules.txt` | Text | The owner's trading rules, shown in the popup. |
-| `rules.ps1` | PowerShell | Shows `rules.txt` in a popup that stays on top until OK. |
+| `rules.ps1` | PowerShell | Shows `rules.txt` in an always-on-top window with the **I've read the rules** button, and saves the click. |
 | `install.ps1` | PowerShell | Starts the blocker and adds it to sign-in. |
 | `uninstall.ps1` | PowerShell | Stops the blocker and removes it from sign-in. |
 | `cBot\AppBlockerPositions.cs` | C# | Writes the open position count to a file every 30 seconds. |
 | `cBot\AppBlockerPositions.csproj` | XML | .NET 6 build settings. |
 | `AppBlockerPositions.algo` | Binary | Compiled cBot to install in cTrader. Rebuild it after changing the `.cs` file. |
-| `blocked.log` | Text | One line per block. Ignored by git. |
+| `blocked.log` | Text | One line per block, marked `(rules not read)` when the button hadn't been clicked. Ignored by git. |
 
 ## Commands
 
@@ -85,8 +85,11 @@ powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 - **Reports count as fresh for 90 seconds:** the cBot writes every 30, so a couple of missed writes are tolerated. The folder is in OneDrive, which can lock files briefly, so the write is wrapped in `try`/`catch`.
 - **3-minute startup window:** if the last report showed trades, a newly opened cTrader gets time for the cBot to report. It's measured from the oldest process, so helper processes don't extend it.
 - **`System.IO.File` is written in full:** plain `File` clashes with `cAlgo.API.File`.
-- **Rules popup runs in its own process:** a popup that waits for OK would pause the loop, so cTrader wouldn't close at 8pm.
-- **Rules shown once per day, tracked in memory:** restarting the blocker during allowed hours shows them again, which is harmless.
+- **Rules window runs in its own process:** a window that waits for a click would pause the loop, so cTrader wouldn't close at 8pm. A mutex keeps it to one window.
+- **Click saved to a file outside OneDrive:** a sync lock could hide the click and close cTrader by mistake. A file also survives blocker restarts.
+- **Unlocks on mouse click only:** in testing, a window that took focus with the button selected could be clicked by a Space or Enter meant for another app. It also opens without taking focus.
+- **`ShowWindow` call in `rules.ps1`:** `block.ps1` starts it hidden, and Windows applies that to the process's first window, so the form stays invisible without it.
+- **Open trades beat the rules lock:** if trades are open at 5:30, cTrader stays open before the button is clicked.
 - **The cBot's class and project are both `AppBlockerPositions` with no spaces:** cTrader names the data folder after the cBot, and `trades.ps1` looks for that name.
 
 ## Known limits
@@ -95,9 +98,10 @@ powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 - Changing the laptop's clock or time zone gets around the schedule.
 - The owner can run `uninstall.ps1` or kill the process, so this adds friction rather than a hard lock.
 - Any open trade keeps cTrader open outside hours. Pending orders don't count as trades.
+- Writing today's date into `rules-read.txt` gets around the rules button.
 - If the cBot isn't running, cTrader closes even with trades open. A popup warns about this during allowed hours, once cTrader has been open for 3 minutes.
 - When cTrader closes, positions and stop-loss or take-profit orders stay with the broker, but cBots running on the PC stop.
 
 ## Testing so far
 
-On 2026-11-02 the 5:30pm start and rules timing passed edge tests (5:29:59pm, 5:30pm, 8pm, Friday, weekend), and the popup was confirmed to show all 8 rules and stay open. Earlier: tested with a fake `ctrader-test.exe` and fake report files, and all passed: schedule edges, the April and October 2027 daylight saving changes, and trade-aware closing. On 2026-10-31 the real cBot ran locally in cTrader: the report folder path was confirmed, the file updated every 30 seconds, and `Test-Reporting` returned true. It hasn't yet been tested with a real open trade or across a cTrader restart.
+On 2026-11-02 the 5:30pm start and rules timing passed edge tests (5:29:59pm, 5:30pm, 8pm, Friday, weekend), and the popup was confirmed to show all 8 rules and stay open. After the unlock button was added, an end-to-end test with a fake app confirmed: the window opens, the X can't close it, the app is closed until the button is clicked, Space doesn't unlock it, a real mouse click does, and the window doesn't come back that day. Earlier: tested with a fake `ctrader-test.exe` and fake report files, and all passed: schedule edges, the April and October 2027 daylight saving changes, and trade-aware closing. On 2026-10-31 the real cBot ran locally in cTrader: the report folder path was confirmed, the file updated every 30 seconds, and `Test-Reporting` returned true. It hasn't yet been tested with a real open trade or across a cTrader restart.

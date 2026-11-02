@@ -10,14 +10,14 @@ Closes the cTrader desktop app outside set hours on Windows, unless trades are o
 
 Times follow the PC's clock, so daylight saving is handled automatically.
 
-At 5:30pm Monday to Thursday, as cTrader unlocks, a **Trading Rules** popup shows your rules. It stays until you click OK.
+At 5:30pm Monday to Thursday a **Trading Rules** window shows your rules. cTrader stays locked until you click **I've read the rules** with the mouse. The window can't be closed any other way.
 
 ## How it works
 
 1. `block.ps1` runs hidden in the background and checks every 2 seconds.
 2. Outside your hours, it closes cTrader unless your trades are still open.
 3. The `AppBlockerPositions` cBot tells it about open trades by writing the count to a file every 30 seconds.
-4. When your hours start, it shows the rules in `rules.txt`. If the PC is asleep or off at 5:30pm, they show as soon as it's back on, before 8pm.
+4. When your hours start, it shows the rules in `rules.txt` and keeps cTrader closed until you click the button. You only need to click once a day. If the PC is asleep or off at 5:30pm, the rules show as soon as it's back on, before 8pm.
 
 ## Setup
 
@@ -47,7 +47,7 @@ Edit `schedule.ps1`, then turn the blocker off and on again.
 
 ## Change your rules
 
-Edit `rules.txt`. No restart needed: the popup reads it each time.
+Edit `rules.txt`. No restart needed: the window reads it each time.
 
 ## Files
 
@@ -57,7 +57,7 @@ Edit `rules.txt`. No restart needed: the popup reads it each time.
 | `schedule.ps1` | Your allowed hours |
 | `trades.ps1` | Reads the cBot's reports |
 | `rules.txt` | Your trading rules |
-| `rules.ps1` | Shows the rules popup |
+| `rules.ps1` | Shows the rules window and its unlock button |
 | `install.ps1` | Turns the blocker on |
 | `uninstall.ps1` | Turns the blocker off |
 | `AppBlockerPositions.algo` | The cBot, ready to install |
@@ -69,5 +69,5 @@ Edit `rules.txt`. No restart needed: the popup reads it each time.
 - The cTrader web and mobile apps aren't blocked.
 - Changing the PC's clock or time zone gets around the schedule.
 - You can turn it off yourself, so it adds friction rather than a hard lock.
-- Any open trade keeps cTrader open outside your hours. Pending orders don't count.
+- Any open trade keeps cTrader open outside your hours, and before you click the rules button. Pending orders don't count.
 - If the cBot isn't running, cTrader closes even with trades open.

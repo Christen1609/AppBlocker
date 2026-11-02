@@ -22,3 +22,11 @@ function Test-RulesDue([datetime]$Time) {
     $start, $end = $Schedule["$($Time.DayOfWeek)"]
     return $start -gt 0 -and (Test-Allowed $Time)
 }
+
+# Holds the date "I've read the rules" was last clicked. Kept outside OneDrive so a sync lock can't hide a click.
+$RulesReadFile = Join-Path $env:LOCALAPPDATA 'AppBlocker\rules-read.txt'
+
+function Test-RulesRead([datetime]$Time) {
+    $read = Get-Content -LiteralPath $RulesReadFile -ErrorAction SilentlyContinue
+    return "$read".Trim() -eq $Time.ToString('yyyy-MM-dd')
+}

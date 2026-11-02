@@ -1,5 +1,3 @@
-cTrader is unlocked. Read these before you trade.
-
 1. Only trade structure that you like.
 2. Keep a loss management strategy in place.
 3. Check if a stop loss makes sense. If it's too far don't trade.
