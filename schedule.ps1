@@ -48,3 +48,39 @@ function Set-RulesRead([datetime]$Time) {
     }
     catch { return $false }
 }
+
+# Name patterns of the apps to close. Add more here.
+$Blocked = @('*ctrader*')
+
+# Kill switch: one press locks the blocked apps for 12 hours, whatever the schedule says.
+# The end time is kept in UTC, so a daylight saving change doesn't move it. Outside OneDrive, like the rules file.
+$KillHours = 12
+$KillFile = Join-Path $env:LOCALAPPDATA 'AppBlocker\kill-until.txt'
+
+# The lock's end time in local time, or $null if there's no lock file or it can't be read.
+function Get-KillUntil {
+    $text = "$(Get-Content -LiteralPath $KillFile -ErrorAction SilentlyContinue)".Trim()
+    $until = [datetime]::MinValue
+    $styles = [Globalization.DateTimeStyles]::RoundtripKind
+    if (-not [datetime]::TryParse($text, [Globalization.CultureInfo]::InvariantCulture, $styles, [ref]$until)) { return $null }
+    return $until.ToLocalTime()
+}
+
+function Test-KillOn([datetime]$Time) {
+    $until = Get-KillUntil
+    return ($null -ne $until) -and $Time.ToUniversalTime() -lt $until.ToUniversalTime()
+}
+
+# Locks until 12 hours after $Time. A lock can only get longer, never shorter.
+# Returns the end time in local time, or $null if the file couldn't be written.
+function Set-KillSwitch([datetime]$Time) {
+    $until = $Time.ToUniversalTime().AddHours($KillHours)
+    $current = Get-KillUntil
+    if ($current -and $current.ToUniversalTime() -gt $until) { $until = $current.ToUniversalTime() }
+    try {
+        $null = New-Item -ItemType Directory -Force -Path (Split-Path $KillFile) -ErrorAction Stop
+        Set-Content -LiteralPath $KillFile -Value $until.ToString('o') -ErrorAction Stop
+        return $until.ToLocalTime()
+    }
+    catch { return $null }
+}

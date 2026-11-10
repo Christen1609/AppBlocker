@@ -1,7 +1,6 @@
 # Closes blocked apps outside the hours in schedule.ps1, unless trades are open.
 # On days whose hours start partway through (Mon-Thu), they also stay closed until "I've read the rules" is clicked.
-# Add more name patterns to $Blocked.
-$Blocked = @('*ctrader*')
+# The apps it closes are listed in $Blocked in schedule.ps1.
 $PollSeconds = 2
 $LogFile = Join-Path $PSScriptRoot 'blocked.log'
 $RulesScript = Join-Path $PSScriptRoot 'rules.ps1'
