@@ -11,4 +11,8 @@ function Stop-Script([string]$Pattern) {
 Stop-Script '*AppBlocker\block.ps1*'
 Stop-Script '*AppBlocker\rules.ps1*'
 
+# The kill switch icon. A lock that's already on stays saved and applies again when the blocker is turned back on.
+. (Join-Path $PSScriptRoot 'shortcut.ps1')
+Remove-Item -LiteralPath $KillShortcutPath -ErrorAction SilentlyContinue
+
 Write-Output 'App Blocker is off.'
