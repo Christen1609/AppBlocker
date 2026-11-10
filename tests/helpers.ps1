@@ -18,15 +18,22 @@ function Complete-Tests {
 
 # Copies the scripts to a scratch folder with a fake app name and test-only mutex names,
 # so a test blocker never closes the real cTrader or clashes with the real blocker.
-function New-TestCopy {
+function New-TestCopy([string]$Source = (Join-Path $PSScriptRoot '..')) {
     $dir = New-TestFolder
-    foreach ($file in Get-ChildItem -Path (Join-Path $PSScriptRoot '..') -Filter '*.ps1') {
+    foreach ($file in Get-ChildItem -Path $Source -Filter '*.ps1') {
         $text = Get-Content -LiteralPath $file.FullName -Raw
         $text = $text.Replace("@('*ctrader*')", "@('*kstest*')")
         $text = $text.Replace("'Local\AppBlocker'", "'Local\AppBlockerTest'").Replace("'Local\AppBlockerRules'", "'Local\AppBlockerTestRules'")
         Set-Content -LiteralPath (Join-Path $dir $file.Name) -Value $text
     }
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\rules.txt') -Destination $dir
+    Copy-Item -LiteralPath (Join-Path $Source 'rules.txt') -Destination $dir
+    # Stop if a replace above missed, so a test can never close the real cTrader or share the real blocker's mutex.
+    $schedule = Get-Content -LiteralPath (Join-Path $dir 'schedule.ps1') -Raw
+    $block = Get-Content -LiteralPath (Join-Path $dir 'block.ps1') -Raw
+    if ($schedule.Contains("'*ctrader*'") -or -not $schedule.Contains("@('*kstest*')") -or
+        $block.Contains("'Local\AppBlocker'") -or -not $block.Contains("'Local\AppBlockerTest'")) {
+        throw "Test copy in $dir isn't safe: update New-TestCopy to match `$Blocked and the mutex names."
+    }
     return $dir
 }
 # Starts a hidden process whose name matches the test copy's $Blocked.
