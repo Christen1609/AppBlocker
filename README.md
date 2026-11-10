@@ -12,6 +12,10 @@ Times follow the PC's clock, so daylight saving is handled automatically.
 
 At 5:30pm Monday to Thursday a **Trading Rules** window shows your rules. cTrader stays locked until you click **I've read the rules** with the mouse. The window can't be closed any other way, and it closes itself at 8pm. If it can't open, a plain popup shows the rules and OK counts as read. If it keeps failing, the rules are skipped for that day so a bug can't lock you out.
 
+## Kill switch
+
+Lost a trade and don't want to overtrade? Double-click **Kill cTrader** on the desktop, or press **Ctrl+Alt+K**. cTrader closes straight away and stays locked for 12 hours, even inside your hours. There's no undo. After 12 hours the normal schedule takes over again.
+
 ## How it works
 
 1. `block.ps1` runs hidden in the background and checks every 2 seconds.
@@ -57,6 +61,8 @@ Edit `rules.txt`. No restart needed: the window reads it each time. A long list 
 | `schedule.ps1` | Your allowed hours |
 | `trades.ps1` | Reads the cBot's reports |
 | `rules.txt` | Your trading rules |
+| `killswitch.ps1` | The kill switch: closes cTrader and locks it for 12 hours |
+| `shortcut.ps1` | Makes the **Kill cTrader** desktop icon |
 | `rules.ps1` | Shows the rules window and its unlock button (or a plain popup if the window can't open) |
 | `install.ps1` | Turns the blocker on |
 | `uninstall.ps1` | Turns the blocker off, and closes the rules window if it's open |
