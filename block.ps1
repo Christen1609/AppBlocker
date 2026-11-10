@@ -1,4 +1,5 @@
 # Closes blocked apps outside the hours in schedule.ps1, unless trades are open.
+# While the kill switch is on (killswitch.ps1), they close whatever the hours or trades.
 # On days whose hours start partway through (Mon-Thu), they also stay closed until "I've read the rules" is clicked.
 # The apps it closes are listed in $Blocked in schedule.ps1.
 $PollSeconds = 2
@@ -41,7 +42,14 @@ while ($true) {
     $rulesDue = Test-RulesDue $now
     # Once today's click is seen, stop re-reading the file for the rest of the day.
     if ($rulesDue -and -not $readSeen) { $readSeen = Test-RulesRead $now }
-    $rulesNeeded = $rulesDue -and -not $readSeen -and -not $rulesGaveUp
+    $killOn = Test-KillOn $now
+    $rulesNeeded = $rulesDue -and -not $readSeen -and -not $rulesGaveUp -and -not $killOn
+
+    # No rules window during a lock. One that's open closes, and isn't counted as a failure.
+    if ($killOn -and $rulesWindow) {
+        if (-not $rulesWindow.HasExited) { $rulesWindow | Stop-Process -Force -ErrorAction SilentlyContinue }
+        $rulesWindow = $null
+    }
 
     # A window that died quickly without a click is a failure. Wait before trying again, and give up after a few.
     if ($rulesWindow -and $rulesWindow.HasExited) {
@@ -67,16 +75,21 @@ while ($true) {
     if (-not $apps) {
         $warned = $false
     }
-    elseif ((Test-Allowed $now) -and -not $rulesNeeded) {
+    elseif (-not $killOn -and (Test-Allowed $now) -and -not $rulesNeeded) {
         if (-not $warned -and -not (Test-JustOpened $apps) -and -not (Test-Reporting)) {
             $warned = $true
             $null = $shell.Popup('Start AppBlockerPositions in cTrader, or it will close when your hours end, even with trades open.', 10, 'App Blocker', $PopupFlags)
         }
     }
-    elseif (-not (Test-TradesOpen $apps)) {
+    elseif ($killOn -or -not (Test-TradesOpen $apps)) {
         $apps | Stop-Process -Force -ErrorAction SilentlyContinue
         $names = ($apps.Name | Sort-Object -Unique) -join ', '
-        if ($rulesNeeded) {
+        if ($killOn) {
+            $logNote = ' (kill switch)'
+            $until = Get-KillUntil
+            $message = if ($until) { "Kill switch on until $($until.ToString('dddd d MMM, h:mm tt'))." } else { "Kill switch on: $names closed." }
+        }
+        elseif ($rulesNeeded) {
             $logNote = ' (rules not read)'
             $message = "Click `"I've read the rules`" to unlock $names."
         }
